@@ -14,12 +14,13 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(item, key) in tableCalc" :key="key">
+      <tr v-for="(item, key) in filteredTableCalcForRender" :key="key">
         <td>{{ getItemName(key) }}</td>
         <td>
           <!-- Для обычных позиций -->
           <span v-if="!editTable && key !== 'discount'">
             {{ isTableItem(item) && item.basePrice !== null ? formatPrice(item.basePrice) : "" }}
+            <span v-if="'basePrice' in item && item.basePrice !== null">₽</span>
           </span>
           <input
             v-else-if="key !== 'discount' && isTableItem(item)"
@@ -32,6 +33,7 @@
           <!-- Для скидки -->
           <span v-if="!editTable && key === 'discount'">
             {{ isDiscountItem(item) && item.amount !== null ? formatPrice(item.amount) : "" }}
+            <span v-if="'amount' in item && item.amount !== null">₽</span>
           </span>
           <input
             v-else-if="key === 'discount' && isDiscountItem(item)"
@@ -55,11 +57,10 @@
         </td>
         <td>
           {{ key !== "discount" && isTableItem(item) ? formatPrice(item.fullPrice) : "" }}
+          <span v-if="key !== 'discount' && isTableItem(item)">₽</span>
         </td>
         <td>
-          <span v-if="!editTable && key !== 'discount' && isTableItem(item)">
-            {{ item.commission }}
-          </span>
+          <span v-if="!editTable && key !== 'discount' && isTableItem(item)"> {{ item.commission }} % </span>
           <input
             v-else-if="key !== 'discount' && isTableItem(item)"
             :value="item.commission"
@@ -82,19 +83,26 @@
         </td>
         <td>
           {{ key !== "discount" ? formatPrice(userProfit[`${key}Profit` as keyof Profit]) : "" }}
+          <span v-if="key !== 'discount'">₽</span>
         </td>
       </tr>
       <tr>
         <td>Итого</td>
         <td colspan="2"></td>
         <td>{{ formatPrice(userProfit.totalFullPrice) }}</td>
-        <td colspan="2"></td>
-        <td>{{ formatPrice(userProfit.totalProfit) }}</td>
+        <td></td>
+        <td style="font-weight: 700">Доход пользователя:</td>
+        <td>{{ formatPrice(userProfit.totalProfit) }} ₽</td>
       </tr>
       <tr>
-        <td>Доход компании</td>
         <td colspan="5"></td>
-        <td>{{ formatPrice(userProfit.companyProfit) }}</td>
+        <td style="font-weight: 700">Доход Workle:</td>
+        <td>{{ formatPrice(userProfit.companyProfit) }} ₽</td>
+      </tr>
+      <tr>
+        <td colspan="5"></td>
+        <td style="font-weight: 700">ОП Workle:</td>
+        <td @click="copyText(formatPrice(userProfit.opWorkle))">{{ formatPrice(userProfit.opWorkle) }} ₽</td>
       </tr>
     </tbody>
   </table>
@@ -102,6 +110,9 @@
 
 <script lang="ts" setup>
 import type { TableCalc, TableItem, DiscountItem } from "~/types/request";
+import { useCopyText } from "#imports";
+
+const { copyText } = useCopyText();
 
 // Интерфейсы (можно убрать, если они импортированы из ~/interfaces/Request)
 interface Profit {
@@ -109,6 +120,7 @@ interface Profit {
   totalFullPrice: number;
   totalProfit: number;
   companyProfit: number;
+  opWorkle: number;
 }
 
 type TableCalcKey = keyof TableCalc;
@@ -134,7 +146,7 @@ const isDiscountItem = (item: any): item is DiscountItem => {
 
 // Helper functions
 const formatPrice = (value: number | null | undefined): string => {
-  return value !== null && value !== undefined ? value.toFixed(2) + " ₽" : "";
+  return value !== null && value !== undefined ? value.toFixed(2) : "";
 };
 
 const handleFocus = <T extends object>(item: T, field: keyof T) => {
@@ -188,6 +200,11 @@ const defaultTableCalc: TableCalc = {
   discount: {
     amount: null,
   },
+  total: {
+    fullPrice: 0,
+    totalUserProfit: 0,
+    totalCompanyProfit: 0,
+  },
 };
 
 // Инициализируем tableCalc, исключая лишние ключи (например, id)
@@ -195,17 +212,31 @@ const defaultTableCalc: TableCalc = {
 const filteredTableCalc =
   props.initialTableCalc && typeof props.initialTableCalc === "object" && !Array.isArray(props.initialTableCalc)
     ? Object.keys(props.initialTableCalc).reduce((acc, key) => {
-        if (["base", "visa", "fuel", "insurance", "additional", "discount"].includes(key)) {
+        const allowedKeys = ["base", "visa", "fuel", "insurance", "additional", "discount"];
+
+        if (allowedKeys.includes(key)) {
           // @ts-ignore
           acc[key] = props.initialTableCalc![key];
         }
+
         return acc;
       }, {} as TableCalc)
     : {};
 
+// Добавляем total вручную, даже если его нет в initialTableCalc
 const tableCalc = reactive<TableCalc>({
   ...defaultTableCalc,
   ...filteredTableCalc,
+  total: {
+    fullPrice: 0,
+    totalUserProfit: 0,
+    totalCompanyProfit: 0,
+  },
+});
+
+const filteredTableCalcForRender = computed(() => {
+  const { total, ...rest } = tableCalc;
+  return rest;
 });
 
 // Следим за изменениями tableCalc и отправляем обновления родителю
@@ -219,7 +250,7 @@ watch(
 
 // Вычисляемый доход
 const userProfit = computed<Profit>(() => {
-  const profits: Profit = { totalFullPrice: 0, totalProfit: 0, companyProfit: 0 };
+  const profits: Profit = { totalFullPrice: 0, totalProfit: 0, companyProfit: 0, opWorkle: 0 };
 
   let totalItemProfit = 0;
   let totalFullPriceBeforeDiscount = 0;
@@ -247,8 +278,19 @@ const userProfit = computed<Profit>(() => {
   const discount = isDiscountItem(tableCalc.discount) ? tableCalc.discount.amount || 0 : 0;
   profits.totalProfit = totalItemProfit - discount;
   profits.totalFullPrice = totalFullPriceBeforeDiscount - discount;
+  profits.opWorkle = profits.totalProfit + profits.companyProfit;
 
   return profits;
+});
+
+watchEffect(() => {
+  const profit = userProfit.value;
+
+  tableCalc.total = {
+    fullPrice: profit.totalFullPrice,
+    totalUserProfit: profit.totalProfit,
+    totalCompanyProfit: profit.companyProfit,
+  };
 });
 
 // Методы для обновления значений

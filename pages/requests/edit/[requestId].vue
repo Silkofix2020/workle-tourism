@@ -1,183 +1,179 @@
 <template>
-  <div>
-    <Container>
-      <div v-if="request">
-        <!-- заголовок -->
-        <SectionWrapper>
-          <div class="head">
-            <h1>Редактирование заявки</h1>
-            <div class="head__controls">
-              <AppButton @click="saveChanges" :disabled="isSaving">
-                {{ isSaving ? "Сохранение..." : "Сохранить изменения" }}
-              </AppButton>
-              <AppButton class="delete" @click="request && deleteRequest(request.requestId)"> Удалить </AppButton>
-            </div>
+  <Container>
+    <div v-if="request">
+      <!-- заголовок -->
+      <SectionWrapper>
+        <div class="head">
+          <h1>Редактирование заявки</h1>
+          <div class="head__controls">
+            <AppButton @click="saveChanges(request.requestId)" :disabled="!isSaveRequest">
+              {{ isSaving ? "Сохранение..." : "Сохранить изменения" }}
+            </AppButton>
+            <AppButton class="delete" @click="request && deleteRequest(request.requestId)"> Удалить </AppButton>
           </div>
-        </SectionWrapper>
-        <!-- основная информация -->
-        <SectionWrapper>
+        </div>
+      </SectionWrapper>
+      <!-- основная информация -->
+      <SectionWrapper>
+        <div class="request-header__info">
           <div>
-            <h4>
+            <h4 style="display: flex; align-items: center">
               Номер заявки Workle:
-              <span class="copy" @click="copyText(request.requestId)">{{ request.requestId }}</span>
+              <TooltipAppTooltip :text="request.requestId" :label="'Скопировать'" />
+              <NuxtLink
+                style="display: flex; align-items: center; margin-left: 20px"
+                :to="`https://admin.ng.workle.ru/offers/${request.requestId}`"
+                target="_blank"
+              >
+                <Icon style="color: #333" name="i-line-md-external-link" size="20px" />
+              </NuxtLink>
             </h4>
+            <h4>Туроператор: {{ request.touroperator }}</h4>
             <h4>
               Номер заявки ТО:
-              <span class="copy" @click="copyText(request.tourOperatorRequestId)">{{
-                request.tourOperatorRequestId
-              }}</span>
+              <TooltipAppTooltip :text="request.tourOperatorRequestId" :label="'Скопировать'" />
             </h4>
             <h4>Дата вылета: {{ request.departureDate ? toLocaleDate(request.departureDate) : "" }}</h4>
+          </div>
+
+          <div style="display: flex; gap: 20px">
             <AppSelect
+              class="request-header__select"
               v-model="request.requestStatus"
               :options="options.statusOptions"
               label="Статус заявки"
               placeholder="Выбрать"
             />
             <AppSelect
+              class="request-header__select"
               v-model="request.payments.paymentFromClientStatus"
               :options="options.paymentOptions"
-              label="Статус заявки"
+              label="Статус оплаты"
+              placeholder="Выбрать"
+            />
+            <AppSelect
+              class="request-header__select"
+              v-model="request.documentsStatus"
+              :options="options.documentsStatus"
+              label="Статус документов"
               placeholder="Выбрать"
             />
           </div>
-        </SectionWrapper>
-        <!-- финансы -->
-        <SectionWrapper>
-          <div>
-            <div style="display: flex; justify-content: space-between">
-              <h3 style="margin: 0">Финансы</h3>
-              <NuxtLink class="link" @click="elementToggle('table')">{{
-                showElement.table ? "Скрыть" : "Показать"
-              }}</NuxtLink>
-            </div>
-            <transition name="slide">
-              <ProfitTable
-                class="profit-table"
-                v-show="showElement.table"
-                :initial-table-calc="request.tableCalc"
-                @update:tableCalc="handleTableCalcUpdate"
-              />
-            </transition>
+        </div>
+      </SectionWrapper>
+      <!-- финансы -->
+      <SectionWrapper>
+        <div>
+          <div style="display: flex; justify-content: space-between">
+            <h3 style="margin: 0">Финансы</h3>
+            <NuxtLink class="link" @click="elementToggle('table')">{{
+              showElement.table ? "Скрыть" : "Показать"
+            }}</NuxtLink>
           </div>
-        </SectionWrapper>
-        <!-- остальные поля -->
-        <SectionWrapper>
-          <h3>Редактирование параметров:</h3>
-          <div
-            v-for="item in parametric"
-            style="display: flex; align-items: center; gap: 20px; width: 400px; height: 32px"
-          >
-            <label :for="item.id">{{ item.label }}: </label>
-            <span v-if="item.showSpan">{{ request[item.id] }}</span>
-            <input v-else v-model="request[item.id]" :id="item.id" type="text" />
-            <button @click="toggleShow(item)" style="margin-left: auto">
-              <Icon style="color: #db7625" v-if="item.showSpan" name="i-material-symbols-edit" size="20px" />
-              <Icon style="color: #1dca21" v-else name="i-material-symbols-download-done-outline" size="20px" />
-            </button>
-          </div>
-          <div></div>
+          <transition name="slide">
+            <ProfitTable
+              class="profit-table"
+              v-show="showElement.table"
+              :initial-table-calc="request.tableCalc"
+              @update:tableCalc="handleTableCalcUpdate"
+            />
+          </transition>
+        </div>
+      </SectionWrapper>
+      <div class="grid-container">
+        <!-- редактирование заявки -->
+        <SectionWrapper class="request-edit">
+          <h3>Параметры тура:</h3>
+          <RequestParamTable :request="request" />
+          <h3>Данные заказчика:</h3>
+          <RequestCustomerTable :request="request.customer" />
         </SectionWrapper>
         <!-- платежи от клиента -->
-        <SectionWrapper>
+        <SectionWrapper class="client-payments">
           <div class="form-section">
-            <div style="display: flex; justify-content: space-between">
+            <div style="display: flex; justify-content: space-between; align-items: center">
               <h3 style="margin: 0">Платежи от клиента</h3>
-              <NuxtLink class="link" @click="elementToggle('clientPayments')">{{
-                showElement.clientPayments ? "Скрыть" : "Показать"
-              }}</NuxtLink>
-            </div>
-            <transition name="slide">
-              <div v-show="showElement.clientPayments" style="margin: 20px 0">
-                <div v-for="(payment, index) in request.payments.paymentsFromClient" :key="index" class="payment-item">
-                  <label>Дата платежа</label>
-                  <input v-model="payment.paymentDate" type="date" />
-                  <label>Сумма платежа</label>
-                  <input v-model="payment.paymentAmount" type="number" step="0.01" />
-                  <button type="button" @click="removeClientPayment(index)">Удалить</button>
-                </div>
-                <button type="button" @click="addClientPayment" class="add-button">Добавить платеж</button>
+              <div>
+                <p>
+                  Оплачено клиентом: <span style="font-weight: 600">{{ totalClientPayments }} ₽</span>
+                </p>
+                <p>
+                  Остаток к оплате:
+                  <span style="font-weight: 600">{{ request.tableCalc.total?.fullPrice - totalClientPayments }} ₽</span>
+                </p>
               </div>
-            </transition>
+            </div>
+            <PaymentsTable
+              v-model:payments="request.payments.paymentsFromClient"
+              @remove="(payload) => removeClientPayment(payload.index)"
+              @add="addClientPayment"
+            />
           </div>
         </SectionWrapper>
         <!-- Платежи туроператору -->
-        <SectionWrapper>
+        <SectionWrapper class="operator-payments">
           <div class="form-section">
-            <div style="display: flex; justify-content: space-between">
-              <h3>Платежи туроператору</h3>
-              <NuxtLink class="link" @click="elementToggle('operatorPayments')">{{
-                showElement.operatorPayments ? "Скрыть" : "Показать"
-              }}</NuxtLink>
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <h3 style="margin: 0">Платежи туроператору</h3>
+              <p>
+                Оплачено ТО: <span style="font-weight: 600">{{ totalOperatorPayments }} ₽</span>
+              </p>
             </div>
-            <transition name="slide">
-              <div v-show="showElement.operatorPayments" style="margin: 20px 0">
-                <div
-                  v-for="(payment, index) in request.payments.paymentsToOperator.payments"
-                  :key="index"
-                  class="payment-item"
-                >
-                  <label>Дата платежа</label>
-                  <input v-model="payment.paymentDate" type="date" />
-                  <label>Сумма платежа</label>
-                  <input v-model="payment.paymentAmount" type="number" step="0.01" />
-                  <button type="button" @click="removeOperatorPayment(index)">Удалить</button>
-                </div>
-                <button type="button" @click="addOperatorPayment" class="add-button">Добавить платеж</button>
-                <div>
-                  <label>Частичная оплата</label>
-                  <input v-model="request.payments.paymentsToOperator.partPay" type="date" />
-                  <label>Полная оплата</label>
-                  <input v-model="request.payments.paymentsToOperator.fullPay" type="date" />
-                </div>
+            <PaymentsTable
+              v-model:payments="request.payments.paymentsToOperator.payments"
+              @remove="(payload) => removeOperatorPayment(payload.index)"
+              @add="addOperatorPayment"
+            />
+            <p>Оплачено ТО: {{ totalOperatorPayments }}</p>
+            <p>Оплачено клиентом: {{ totalClientPayments }}</p>
+            <label>Оплачено</label>
+            <input type="checkbox" v-model="request.payments.paymentsToOperator.paid" />
+
+            <div class="operator-payments-wrapper">
+              <h4>Сроки оплаты туроператору:</h4>
+              <div class="operator-payments">
+                <label>Частичная оплата:</label>
+                <input v-model="request.payments.paymentsToOperator.partPay" type="date" />
               </div>
-            </transition>
+              <div class="operator-payments">
+                <label>Полная оплата:</label>
+                <input v-model="request.payments.paymentsToOperator.fullPay" type="date" />
+              </div>
+            </div>
           </div>
         </SectionWrapper>
       </div>
+      <!-- История изменений заявки -->
+      <SectionWrapper>
+        <h3>История изменений заявки</h3>
 
-      <div v-else>
-        <p>Заявка не найдена или данные загружаются...</p>
-      </div>
-    </Container>
-    <div>
-      {{ request }}
+        <HistoryChangeTable :data="request.historyOfChanges" />
+      </SectionWrapper>
     </div>
-  </div>
+
+    <div v-else>
+      <p>Заявка не найдена или данные загружаются...</p>
+    </div>
+  </Container>
 </template>
 
 <script lang="ts" setup>
 import { useDateConvert } from "#imports";
 import { useRequestsStore } from "#imports";
-import type { Request, PaymentsData } from "~/types/request"; // Путь к вашему интерфейсу
+import type { Request, PaymentsData, flightsData } from "~/types/request"; // Путь к вашему интерфейсу
 import { useCopyText } from "#imports";
+import { useFormatDate } from "#imports";
+import { useToastStore } from "#imports";
+import HistoryChangeTable from "~/components/HistoryChangeTable.vue";
 
 const { copyText } = useCopyText();
-const { toLocaleDate, useDateInput, toInputDate, fromInputDate } = useDateConvert();
+const { toLocaleDate, toLocaleDateLong, useDateInput, toInputDate, fromInputDate } = useDateConvert();
 const { user } = useUserSession();
+const toastStore = useToastStore();
 
 definePageMeta({
   middleware: "auth",
 });
-
-interface Parametric {
-  label: string;
-  id: string;
-  showSpan: boolean;
-}
-
-const parametric = ref<Parametric[]>([
-  { label: "Номер заявки ТО", id: "tourOperatorRequestId", showSpan: true },
-  { label: "Страна назначения", id: "destinationCountry", showSpan: true },
-  { label: "Название тура", id: "tourName", showSpan: true },
-  { label: "Продолжительность", id: "duration", showSpan: true },
-  { label: "Отель", id: "hotelName", showSpan: true },
-  { label: "Название тура", id: "tourName", showSpan: true },
-]);
-
-const toggleShow = (item: Parametric) => {
-  item.showSpan = !item.showSpan;
-};
 
 const options = {
   statusOptions: [
@@ -185,6 +181,8 @@ const options = {
     { value: "Подтверждена", label: "Подтверждена" },
     { value: "Бронирование", label: "Бронирование" },
     { value: "Отменена", label: "Отменена" },
+    { value: "Исполнена", label: "Исполнена" },
+    { value: "Отказ ТО", label: "Отказ ТО" },
   ],
   paymentOptions: [
     { value: "Не оплачена", label: "Не оплачена" },
@@ -192,30 +190,75 @@ const options = {
     { value: "Оплачена", label: "Оплачена" },
     { value: "Отменена", label: "Отменена" },
   ],
+  documentsStatus: [
+    { value: "Не выданы", label: "Не выданы" },
+    { value: "Выданы", label: "Выданы" },
+  ],
 };
 const route = useRoute();
 const param = route.params.requestId;
 
 const requestsStore = useRequestsStore();
+const isSaveRequest = ref(false);
 
 const showElement = ref<Record<string, boolean>>({
   table: false,
   clientPayments: false,
-  operatorPayments: false,
+  operatorPayments: true,
 });
 
 const elementToggle = (elementName: string) => {
   showElement.value[elementName] = !showElement.value[elementName];
 };
 
+let initialRequestSnapshot: Request | null = null;
+const hasUnsavedChanges = ref(false);
+
 // Загружаем данные заявки с указанием типа
 const { data: request, refresh } = await useFetch<Request>(`/api/requests/${param}`);
+
+watch(
+  () => request.value,
+  (newRequest) => {
+    if (!newRequest) return;
+
+    if (initialRequestSnapshot === null) {
+      initialRequestSnapshot = JSON.parse(JSON.stringify(newRequest));
+      hasUnsavedChanges.value = false;
+      return;
+    }
+
+    // Сравниваем текущее состояние с исходным
+    hasUnsavedChanges.value = JSON.stringify(newRequest) !== JSON.stringify(initialRequestSnapshot);
+  },
+  { deep: true, immediate: true }
+);
+
+// Теперь isSaveRequest будет зависеть только от hasUnsavedChanges
+watch(hasUnsavedChanges, (newVal) => {
+  isSaveRequest.value = newVal;
+});
 
 // Состояние для отслеживания процесса сохранения
 const isSaving = ref<boolean>(false);
 
 // Локальная копия tableCalc для обновлений
 const updatedTableCalc = ref(request.value?.tableCalc || {});
+
+// общая сумма платежей
+const totalOperatorPayments = computed(() => {
+  return request.value?.payments.paymentsToOperator.payments.reduce((sum, payment) => {
+    return sum + (payment.paymentAmount || 0);
+  }, 0);
+});
+
+const totalClientPayments = computed(() => {
+  return (
+    request.value?.payments.paymentsFromClient.reduce((sum, payment) => {
+      return sum + (payment.paymentAmount || 0);
+    }, 0) || 0
+  ); // Исправлено: paymentFromClient -> paymentsFromClient
+});
 
 // Обработчик обновления tableCalc из ProfitTable
 const handleTableCalcUpdate = (newTableCalc: any) => {
@@ -248,11 +291,17 @@ const deleteRequest = async (requestId: string) => {
   if (requestId) {
     requestsStore.removeRequest(requestId);
 
-    $fetch(`/api/requests/${requestId}`, {
-      method: "DELETE",
+    confirm("Вы уверены, что хотите удалить заявку?");
+    if (!confirm) return;
+
+    await $fetch(`/api/requests/${requestId}`, {
+      method: "DELETE" as any,
     })
       .then(() => {
         navigateTo("/requests");
+      })
+      .then(() => {
+        toastStore.showToast("Заявка удалена", "success");
       })
       .catch((error) => {
         console.error("Error deleting request:", error);
@@ -261,23 +310,34 @@ const deleteRequest = async (requestId: string) => {
 };
 
 // Функция для сохранения изменений
-const saveChanges = async () => {
+const saveChanges = async (requestId: string) => {
   if (!request.value) return;
 
   requestsStore.updatedRequest(request.value.requestId, request.value);
 
   isSaving.value = true;
+  isSaveRequest.value = true;
   try {
-    const response = await $fetch(`/api/requests/${param}`, {
-      method: "PATCH",
+    const response = await $fetch(`/api/requests/${requestId}`, {
+      method: "PATCH" as any,
       body: {
         ...request.value,
         tableCalc: updatedTableCalc.value,
-        modifiedBy: user.value.username,
+        historyOfChanges: {
+          createdBy: request.value.historyOfChanges?.createdBy || "",
+          modifiedBy: [
+            ...(request.value.historyOfChanges?.modifiedBy || []), // существующие записи
+            {
+              username: user.value.username,
+              modified_at: new Date(),
+            },
+          ],
+        },
       },
     });
 
     await refresh();
+    toastStore.showToast("Изменения сохранены", "success");
   } catch (error) {
     console.error("Error saving changes:", error);
   } finally {
@@ -335,29 +395,10 @@ const saveChanges = async () => {
   }
 }
 
-.copy {
-  cursor: pointer;
-  &:hover {
-    background-color: #ccc;
-  }
-}
-
 .link {
   cursor: pointer;
   color: #0077cc;
   text-decoration: underline;
-}
-
-.slide-enter-active,
-.slide-leave-active {
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  transform-origin: top;
-}
-
-.slide-enter-from,
-.slide-leave-to {
-  transform: translateY(-20px);
-  opacity: 0;
 }
 
 .profit-table {
@@ -412,18 +453,50 @@ const saveChanges = async () => {
   }
 }
 
-.add-button {
-  display: inline-block;
-  padding: 8px 16px;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
+.operator-payments {
+  &-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 
-  &:hover {
-    background-color: #218838;
+    & h4 {
+      margin: 10px 0;
+    }
   }
+}
+
+.request-header {
+  &__info {
+    display: flex;
+    align-items: center;
+  }
+  &__select {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  grid-template-rows: repeat(2, auto);
+  gap: 16px;
+}
+.request-edit {
+  grid-column: 2 / 3; /* Вторая колонка */
+  grid-row: 1 / 3; /* Объединяет две строки */
+  margin: 0;
+}
+
+.client-payments {
+  grid-column: 1 / 2; /* Первая колонка */
+  grid-row: 1 / 2; /* Первая строка */
+  margin: 0;
+}
+
+.operator-payments {
+  grid-column: 1 / 2; /* Первая колонка */
+  grid-row: 2 / 3; /* Вторая строка */
+  margin: 0;
 }
 </style>

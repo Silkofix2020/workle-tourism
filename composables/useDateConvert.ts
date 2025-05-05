@@ -14,6 +14,22 @@ export const useDateConvert = () => {
     });
   };
 
+  const toLocaleDateLong = (date: string | Date): string => {
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      console.error("Invalid date:", date);
+      return "Некорректная дата";
+    }
+    return dateObj.toLocaleDateString("ru-RU", {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  };
+
   const toInputDate = (isoDate: string | Date): string => {
     if (!isoDate) return "";
     const date = new Date(isoDate);
@@ -35,6 +51,7 @@ export const useDateConvert = () => {
 
   return {
     toLocaleDate,
+    toLocaleDateLong,
     toInputDate,
     fromInputDate,
     useDateInput,

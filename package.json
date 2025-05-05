@@ -17,8 +17,11 @@
     "nuxt": "^3.16.2",
     "nuxt-auth-utils": "^0.5.20",
     "pinia": "^3.0.2",
+    "typescript": "^5.8.3",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0",
+    "vue-tsc": "^2.2.10",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.3"
   },
   "devDependencies": {

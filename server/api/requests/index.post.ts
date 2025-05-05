@@ -10,18 +10,23 @@ export default defineEventHandler(async (event) => {
       requestStatus,
       payments,
       touroperator,
+      tourOperatorRequestId,
+      hotelName,
       tourName,
+      tableCalc,
+      customer,
+      flights,
       departureCity,
       destinationCountry,
       departureDate,
       price,
       duration,
-      createdBy,
-      modifiedBy,
+      historyOfChanges,
+      documentsStatus,
     } = body;
 
     // Проверка обязательных полей
-    if (!requestId || !touroperator || !tourName || !createdBy) {
+    if (!requestId || !touroperator || !tourName) {
       throw createError({
         statusCode: 400,
         statusMessage: "Отсутствуют обязательные поля",
@@ -40,7 +45,7 @@ export default defineEventHandler(async (event) => {
           })) || [],
         paymentsToOperator: {
           payments:
-            payments?.paymentsToOperator?.payments.map((p: any) => ({
+            payments?.paymentsToOperator?.payments?.map((p: any) => ({
               paymentDate: p.paymentDate ? new Date(p.paymentDate) : undefined,
               paymentAmount: parseFloat(p.paymentAmount) || undefined,
             })) || [],
@@ -49,14 +54,19 @@ export default defineEventHandler(async (event) => {
         },
       },
       touroperator,
+      tourOperatorRequestId,
+      hotelName,
+      tableCalc,
+      customer,
+      flights,
       tourName,
       departureCity,
       destinationCountry,
       departureDate: departureDate ? new Date(departureDate) : undefined,
       price: parseFloat(price) || undefined,
       duration: parseInt(duration) || undefined,
-      createdBy,
-      modifiedBy: modifiedBy || createdBy,
+      historyOfChanges,
+      documentsStatus,
     });
 
     await newRequest.save();

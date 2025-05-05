@@ -51,6 +51,9 @@ export default defineEventHandler(async (event) => {
           fullPay: request.payments.paymentsToOperator.fullPay
             ? new Date(request.payments.paymentsToOperator.fullPay).toISOString().split("T")[0]
             : null,
+          ...(request.payments.paymentsToOperator.paid !== undefined && {
+            paid: request.payments.paymentsToOperator.paid,
+          }),
         };
       }
     }

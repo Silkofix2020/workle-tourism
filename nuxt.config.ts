@@ -22,7 +22,7 @@ export default defineNuxtConfig({
         scss: {
           additionalData: `
           @use "sass:math";
-          
+          @use "@/assets/styles/variables.scss" as *;
           `,
         },
       },

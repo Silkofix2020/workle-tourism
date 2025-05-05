@@ -14,6 +14,7 @@ export default defineEventHandler(async (event) => {
     } catch (error) {
       // Можно добавить логирование ошибки, если нужно
       console.error("Auth middleware error:", error);
+      console.log("URL:", url.pathname);
 
       // Если сессии нет, возвращаем 401
       throw createError({

@@ -3,6 +3,13 @@ import { defineEventHandler, readBody, createError } from "h3";
 import Request from "~/server/models/Request"; // Путь к вашей модели
 
 export default defineEventHandler(async (event) => {
+  if (event.node.req.method !== "PATCH") {
+    throw createError({
+      statusCode: 405,
+      statusMessage: "Method Not Allowed",
+    });
+  }
+
   try {
     // Получаем requestId из параметров маршрута
     const requestId = event.context.params?.requestId;
@@ -21,7 +28,7 @@ export default defineEventHandler(async (event) => {
         statusMessage: "Request body is required",
       });
     }
-
+    console.log("Request body:", body);
     // Обновляем документ в базе данных
     const updatedRequest = await Request.findOneAndUpdate(
       { requestId }, // Ищем по requestId

@@ -16,6 +16,10 @@ const operatorPaymentsSchema = new mongoose.Schema({
   ],
   partPay: Date,
   fullPay: Date,
+  paid: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Схема для платежей
@@ -39,6 +43,12 @@ const tableItemSchema = new mongoose.Schema({
   profit: { type: Number, default: 0 },
 });
 
+const tableItemTotalSchema = new mongoose.Schema({
+  fullPrice: { type: Number, default: 0 },
+  totalUserProfit: { type: Number, default: 0 },
+  totalCompanyProfit: { type: Number, default: 0 },
+});
+
 // Схема для позиции скидки
 const discountItemSchema = new mongoose.Schema({
   amount: { type: Number, default: null },
@@ -52,6 +62,49 @@ const tableCalcSchema = new mongoose.Schema({
   insurance: tableItemSchema,
   additional: tableItemSchema,
   discount: discountItemSchema,
+  total: tableItemTotalSchema,
+});
+
+const flightsSchema = new mongoose.Schema({
+  flightThere: String,
+  flightBack: String,
+});
+
+const historyCreatedBySchema = new mongoose.Schema({
+  username: String,
+  created_at: Date,
+});
+const historyModifiedBySchema = new mongoose.Schema({
+  username: String,
+  modified_at: Date,
+});
+
+const historyOfChangesSchema = new mongoose.Schema({
+  createdBy: historyCreatedBySchema,
+  modifiedBy: [historyModifiedBySchema],
+});
+
+const CustomerSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    default: "",
+  },
+  surname: {
+    type: String,
+    default: "",
+  },
+  patronymic: {
+    type: String,
+    default: "",
+  },
+  phone: {
+    type: String,
+    default: "",
+  },
+  email: {
+    type: String,
+    default: "",
+  },
 });
 
 // Основная схема запроса
@@ -60,24 +113,71 @@ const requestSchema = new mongoose.Schema(
     requestId: { type: String, required: true, unique: true },
     requestStatus: {
       type: String,
-      enum: ["Поступила", "Подтверждена", "Бронирование", "Отменена"],
+      enum: ["Поступила", "Подтверждена", "Бронирование", "Исполнена", "Отменена", "Отказ ТО"],
       default: "Поступила",
     },
-
+    comment: {
+      type: String,
+      default: "",
+    },
     payments: PaymentSchema,
+    documentsStatus: {
+      type: String,
+      enum: ["Не выданы", "Выданы"],
+      default: "Не выданы",
+    },
 
-    touroperator: String,
-    tourOperatorRequestId: String,
-    tourName: String,
-    departureCity: String,
-    destinationCountry: String,
-    departureDate: Date,
-    price: Number,
-    duration: Number,
-    hotelName: String,
-
-    createdBy: String,
-    modifiedBy: String,
+    touroperator: {
+      type: String,
+      default: "",
+    },
+    tourOperatorRequestId: {
+      type: String,
+      default: "",
+    },
+    tourName: {
+      type: String,
+      default: "",
+    },
+    departureCity: {
+      type: String,
+      default: "",
+    },
+    destinationCountry: {
+      type: String,
+      default: "",
+    },
+    departureDate: {
+      type: Date,
+      default: new Date(),
+    },
+    price: {
+      type: Number,
+      default: 0,
+    },
+    duration: {
+      type: Number,
+      default: 0,
+    },
+    hotelName: {
+      type: String,
+      default: "",
+    },
+    hotelCategory: {
+      type: String,
+      default: "",
+    },
+    hotelRoomType: {
+      type: String,
+      default: "",
+    },
+    flights: {
+      type: flightsSchema,
+      default: () => ({
+        flightThere: String,
+        flightBack: String,
+      }),
+    },
 
     // Добавляем данные таблицы
     tableCalc: {
@@ -89,8 +189,21 @@ const requestSchema = new mongoose.Schema(
         insurance: {},
         additional: {},
         discount: {},
+        total: {},
       }),
     },
+    customer: {
+      type: CustomerSchema,
+      default: () => ({
+        name: "",
+        surname: "",
+        patronymic: "",
+        phone: "",
+        email: "",
+      }),
+    },
+    historyOfChanges: historyOfChangesSchema,
+    isChecked: { type: Boolean, default: false },
   },
   {
     timestamps: true,

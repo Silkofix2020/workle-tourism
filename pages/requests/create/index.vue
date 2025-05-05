@@ -11,6 +11,7 @@
         <option value="Поступила">Поступила</option>
         <option value="Подтверждена">Подтверждена</option>
         <option value="Бронирование">Бронирование</option>
+        <option value="Исполнена">Исполнена</option>
         <option value="Отменена">Отменена</option>
       </select>
     </div>
@@ -19,6 +20,10 @@
       <select id="touroperator" v-model="formData.touroperator">
         <option v-for="(operator, index) in operators" :value="operator.value" :key="index">{{ operator.name }}</option>
       </select>
+    </div>
+    <div class="form-group">
+      <label for="tourName">Номер заявки ТО</label>
+      <input id="tourName" v-model="formData.tourOperatorRequestId" type="text" required />
     </div>
     <div class="form-group">
       <label for="tourName">Название тура</label>
@@ -38,19 +43,15 @@
     </div>
     <div class="form-group">
       <label for="price">Цена</label>
-      <input id="price" v-model="formData.price" type="number" step="0.01" />
+      <input id="price" v-model="formData.tableCalc.base.basePrice" type="number" step="0.01" />
+    </div>
+    <div class="form-group">
+      <label for="duration">Отель</label>
+      <input id="duration" v-model="formData.hotelName" type="text" />
     </div>
     <div class="form-group">
       <label for="duration">Длительность (дни)</label>
       <input id="duration" v-model="formData.duration" type="number" />
-    </div>
-    <div class="form-group">
-      <label for="createdBy">Создано пользователем</label>
-      <input id="createdBy" v-model="formData.createdBy" type="text" required />
-    </div>
-    <div class="form-group">
-      <label for="modifiedBy">Изменено пользователем</label>
-      <input id="modifiedBy" v-model="formData.modifiedBy" type="text" />
     </div>
 
     <!-- Платежи от клиента -->
@@ -105,6 +106,8 @@ definePageMeta({
 
 const { user } = useUserSession();
 
+const fullPrice = ref(0);
+
 const formData = ref({
   requestId: "",
   requestStatus: "Поступила",
@@ -115,17 +118,44 @@ const formData = ref({
       payments: [],
       partPay: "",
       fullPay: "",
+      paid: false,
     },
   },
   touroperator: "",
+  tourOperatorRequestId: "",
   tourName: "",
   depatureCity: "",
   destinationCountry: "",
   departureDate: "",
-  price: "",
+  flights: {
+    flightThere: "",
+    flightBack: "",
+  },
+  tableCalc: {
+    base: {
+      basePrice: 0,
+    },
+    total: {
+      fullPrice: fullPrice.value,
+    },
+  },
   duration: "",
-  createdBy: user.value.username,
-  modifiedBy: user.value.username,
+  hotelName: "",
+  historyOfChanges: {
+    createdBy: {
+      username: user.value.username,
+      created_at: new Date(),
+    },
+    modifiedBy: {
+      username: user.value.username,
+      modified_at: new Date(),
+    },
+  },
+  documentsStatus: "Не выданы",
+});
+
+const calcFullPrice = computed(() => {
+  return (fullPrice.value = formData.value.tableCalc.total.fullPrice = formData.value.tableCalc.base.basePrice);
 });
 
 const emit = defineEmits(["submit"]);
@@ -166,17 +196,44 @@ const handleSubmit = async () => {
       payments: {
         paymentFromClientStatus: "Не оплачена",
         paymentsFromClient: [],
-        paymentsToOperator: [],
+        paymentsToOperator: {
+          payments: [],
+          partPay: "",
+          fullPay: "",
+          paid: false,
+        },
       },
       touroperator: "",
+      tourOperatorRequestId: "",
       tourName: "",
       depatureCity: "",
       destinationCountry: "",
       departureDate: "",
-      price: "",
+      flights: {
+        flightThere: "",
+        flightBack: "",
+      },
+      tableCalc: {
+        base: {
+          basePrice: 0,
+        },
+        total: {
+          fullPrice: calcFullPrice.value,
+        },
+      },
       duration: "",
-      createdBy: user.value.username,
-      modifiedBy: user.value.username,
+      hotelName: "",
+      historyOfChanges: {
+        createdBy: {
+          username: user.value.username,
+          created_at: new Date(),
+        },
+        modifiedBy: {
+          username: user.value.username,
+          modified_at: new Date(),
+        },
+      },
+      documentsStatus: "Не выданы",
     };
   } catch (error) {
     console.error("Ошибка при создании заказа:", error);

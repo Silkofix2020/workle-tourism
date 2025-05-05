@@ -1,12 +1,27 @@
 <template>
-  <div class="section-wrapper">
+  <div class="section-wrapper" :style="{ width: style.widthValue }">
     <slot />
   </div>
 </template>
 
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+const props = defineProps({
+  width: {
+    type: String,
+    default: "100%",
+  },
+});
 
-<style lang="scss" scoped>
+const style = computed(() => {
+  const widthValue = props.width?.includes("%") || props.width?.includes("px") ? props.width : `${props.width}px`;
+
+  return {
+    widthValue,
+  };
+});
+</script>
+
+<style lang="scss">
 .section-wrapper {
   padding: 10px;
   margin: 20px 0;

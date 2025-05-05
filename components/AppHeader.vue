@@ -3,6 +3,7 @@
     <nav class="header__nav">
       <NuxtLink class="header__link" to="/">Главная</NuxtLink>
       <NuxtLink class="header__link" to="/requests">Заявки</NuxtLink>
+      <NuxtLink class="header__link" to="/requests-report">Отчет по заявкам</NuxtLink>
     </nav>
     <div class="header__auth" v-if="loggedIn">
       <h3>Привет, {{ user.username }}!</h3>
