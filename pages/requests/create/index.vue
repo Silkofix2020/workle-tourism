@@ -30,8 +30,8 @@
       <input id="tourName" v-model="formData.tourName" type="text" required />
     </div>
     <div class="form-group">
-      <label for="depatureCity">Город отправления</label>
-      <input id="depatureCity" v-model="formData.depatureCity" type="text" />
+      <label for="departureCity">Город отправления</label>
+      <input id="departureCity" v-model="formData.departureCity" type="text" />
     </div>
     <div class="form-group">
       <label for="destinationCountry">Страна назначения</label>
@@ -103,10 +103,15 @@
 definePageMeta({
   middleware: "auth",
 });
-
+import { useToastStore } from "#imports";
 const { user } = useUserSession();
 
 const fullPrice = ref(0);
+const calcFullPrice = computed(() => {
+  return (fullPrice.value = formData.value.tableCalc.base.basePrice);
+});
+
+const toastStore = useToastStore();
 
 const formData = ref({
   requestId: "",
@@ -124,7 +129,7 @@ const formData = ref({
   touroperator: "",
   tourOperatorRequestId: "",
   tourName: "",
-  depatureCity: "",
+  departureCity: "",
   destinationCountry: "",
   departureDate: "",
   flights: {
@@ -134,9 +139,16 @@ const formData = ref({
   tableCalc: {
     base: {
       basePrice: 0,
+      quantity: 1,
+      fullPrice: calcFullPrice,
     },
+    visa: {},
+    fuel: {},
+    insurance: {},
+    additional: {},
+    discount: {},
     total: {
-      fullPrice: fullPrice.value,
+      fullPrice: calcFullPrice,
     },
   },
   duration: "",
@@ -152,10 +164,6 @@ const formData = ref({
     },
   },
   documentsStatus: "Не выданы",
-});
-
-const calcFullPrice = computed(() => {
-  return (fullPrice.value = formData.value.tableCalc.total.fullPrice = formData.value.tableCalc.base.basePrice);
 });
 
 const emit = defineEmits(["submit"]);
@@ -206,7 +214,7 @@ const handleSubmit = async () => {
       touroperator: "",
       tourOperatorRequestId: "",
       tourName: "",
-      depatureCity: "",
+      departureCity: "",
       destinationCountry: "",
       departureDate: "",
       flights: {
@@ -235,8 +243,9 @@ const handleSubmit = async () => {
       },
       documentsStatus: "Не выданы",
     };
+    toastStore.showToast("Заявка успешно создана", "success");
   } catch (error) {
-    console.error("Ошибка при создании заказа:", error);
+    toastStore.showToast(error.response._data.message, "error");
   }
 };
 
