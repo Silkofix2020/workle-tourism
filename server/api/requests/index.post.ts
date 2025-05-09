@@ -69,17 +69,28 @@ export default defineEventHandler(async (event) => {
       documentsStatus,
     });
 
+    const existing = await Request.findOne({ requestId: newRequest.requestId });
+
+    if (existing) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Заказ с таким ID уже существует",
+      });
+    }
+
     await newRequest.save();
 
-    return {
-      message: "Заказ успешно создан",
-      request: newRequest,
-    };
-  } catch (error) {
+    if (newRequest.requestId)
+      return {
+        message: "Заказ успешно создан",
+        request: newRequest,
+      };
+  } catch (error: any) {
     console.error("Ошибка при создании заказа:", error);
+
     throw createError({
-      statusCode: 500,
-      statusMessage: "Внутренняя ошибка сервера",
+      statusCode: error.statusCode || 500,
+      statusMessage: error.statusMessage || "Внутренняя ошибка сервера",
     });
   }
 });
