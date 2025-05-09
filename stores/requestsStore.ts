@@ -6,14 +6,14 @@ export const useRequestsStore = defineStore("requests", () => {
   const requests = ref<Request[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
-  const searchById = ref<string | null>(null);
+  const searchParam = ref<string | null>(null);
   const skip = ref<number>(0);
   const limit = ref<number>(10);
   const hasMore = ref<boolean>(true);
   const total = ref<number>(0);
 
   // Асинхронное действие для получения данных
-  async function fetchRequests() {
+  const fetchRequests = async () => {
     try {
       loading.value = true;
       const response = await $fetch<{
@@ -38,10 +38,10 @@ export const useRequestsStore = defineStore("requests", () => {
     } finally {
       loading.value = false;
     }
-  }
+  };
 
   // Новый метод: подгружаем еще заявки
-  async function loadMoreRequests() {
+  const loadMoreRequests = async () => {
     if (!hasMore.value || loading.value) return;
 
     try {
@@ -63,14 +63,14 @@ export const useRequestsStore = defineStore("requests", () => {
     } finally {
       loading.value = false;
     }
-  }
+  };
 
   // Метод: поиск или добавление заявки по ID
-  async function findAndAddRequestById(id: string): Promise<Request | null> {
+  const findAndAddRequestById = async (id: string): Promise<Request | null> => {
     const existingRequest = requests.value.find((r) => r.requestId === id || r.tourOperatorRequestId === id);
 
     if (existingRequest) {
-      searchById.value = id;
+      searchParam.value = id;
       return existingRequest;
     }
 
@@ -82,7 +82,7 @@ export const useRequestsStore = defineStore("requests", () => {
 
       if (data.message === "Заявка найдена") {
         requests.value.unshift(data.request);
-        searchById.value = id;
+        searchParam.value = id;
         return data.request;
       }
 
@@ -91,22 +91,22 @@ export const useRequestsStore = defineStore("requests", () => {
       console.error("Ошибка поиска заявки:", err);
       return null;
     }
-  }
+  };
 
-  function setSearchById(id: string | null) {
-    searchById.value = id;
-  }
+  const setSearchById = (id: string | null) => {
+    searchParam.value = id;
+  };
 
-  function removeRequest(requestId: string) {
+  const removeRequest = (requestId: string) => {
     requests.value = requests.value.filter((request) => request.requestId !== requestId);
-  }
+  };
 
-  function updatedRequest(requestId: string, updatedRequest: Request) {
+  const updatedRequest = (requestId: string, updatedRequest: Request) => {
     const index = requests.value.findIndex((request) => request.requestId === requestId);
     if (index !== -1) {
       requests.value[index] = updatedRequest;
     }
-  }
+  };
 
   // Автоматический вызов fetchRequests при инициализации стора
 
@@ -114,7 +114,7 @@ export const useRequestsStore = defineStore("requests", () => {
     requests,
     loading,
     error,
-    searchById,
+    searchParam,
     hasMore,
     skip,
     limit,
