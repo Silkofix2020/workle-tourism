@@ -85,7 +85,7 @@ export interface Request {
   documentsStatus: string;
 
   departureDate: Date;
-  depatureCity: string;
+  departureCity: string;
   tourOperatorRequestId: string;
   tourName: string;
   duration: number;

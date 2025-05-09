@@ -35,7 +35,7 @@ const PaymentSchema = new mongoose.Schema({
 
 // Схема для обычных позиций таблицы (base, visa, fuel, insurance, additional)
 const tableItemSchema = new mongoose.Schema({
-  basePrice: { type: Number, default: null },
+  basePrice: { type: Number, default: 0 },
   quantity: { type: Number, default: 0 },
   fullPrice: { type: Number, default: 0 },
   commission: { type: Number, default: 0 },
@@ -51,7 +51,7 @@ const tableItemTotalSchema = new mongoose.Schema({
 
 // Схема для позиции скидки
 const discountItemSchema = new mongoose.Schema({
-  amount: { type: Number, default: null },
+  amount: { type: Number, default: 0 },
 });
 
 // Схема для всей таблицы
@@ -183,13 +183,24 @@ const requestSchema = new mongoose.Schema(
     tableCalc: {
       type: tableCalcSchema,
       default: () => ({
-        base: {},
-        visa: {},
-        fuel: {},
-        insurance: {},
-        additional: {},
-        discount: {},
-        total: {},
+        base: {
+          basePrice: 0,
+          quantity: 1,
+          fullPrice: 0,
+          commission: 0,
+          career: 0,
+          profit: 0,
+        },
+        visa: { basePrice: 0, quantity: 0, fullPrice: 0, commission: 0, career: 0, profit: 0 },
+        fuel: { basePrice: 0, quantity: 0, fullPrice: 0, commission: 0, career: 0, profit: 0 },
+        insurance: { basePrice: 0, quantity: 0, fullPrice: 0, commission: 0, career: 0, profit: 0 },
+        additional: { basePrice: 0, quantity: 0, fullPrice: 0, commission: 0, career: 0, profit: 0 },
+        discount: { amount: 0 },
+        total: {
+          fullPrice: 0,
+          totalUserProfit: 0,
+          totalCompanyProfit: 0,
+        },
       }),
     },
     customer: {
