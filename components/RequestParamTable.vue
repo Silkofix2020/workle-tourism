@@ -6,7 +6,7 @@
         <td :class="{ 'edit-mode': !item.showSpan }">
           <template v-if="item.id === 'departureDate'">
             <span v-if="item.showSpan">{{ useFormatDate(request[item.id]) }}</span>
-            <input @keydown.enter="toggleShow(item)" v-else v-model="request[item.id]" :id="item.id" " type="date" />
+            <input @keydown.enter="toggleShow(item)" v-else v-model="request[item.id]" :id="item.id" type="date" />
           </template>
           <template v-else-if="item.id === 'flightThere' || item.id === 'flightBack'">
             <span v-if="item.showSpan">{{ request.flights?.[item.id] }}</span>

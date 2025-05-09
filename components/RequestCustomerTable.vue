@@ -19,6 +19,10 @@
 </template>
 
 <script lang="ts" setup>
+import { useStringHelpers } from "~/composables/useStringHelpers";
+
+const { firstCharUpper, formatPhone } = useStringHelpers();
+
 interface Parametric {
   label: string;
   id: string;
@@ -43,6 +47,23 @@ const parametric = ref<Parametric[]>([
 const toggleShow = (item: Parametric) => {
   item.showSpan = !item.showSpan;
 };
+
+const formattedFields = ["name", "surname", "patronymic", "phone"];
+
+watch(
+  () => props.request,
+  (newRequest) => {
+    if (formattedFields.includes("phone")) {
+      props.request.phone = formatPhone(newRequest.phone);
+    }
+    formattedFields.forEach((field) => {
+      if (newRequest[field]) {
+        props.request[field] = firstCharUpper(newRequest[field]);
+      }
+    });
+  },
+  { deep: true, immediate: true }
+);
 </script>
 
 <style lang="scss" scoped>

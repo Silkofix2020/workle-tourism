@@ -164,10 +164,12 @@ import type { Request, PaymentsData, flightsData } from "~/types/request"; // П
 import { useCopyText } from "#imports";
 import { useFormatDate } from "#imports";
 import { useToastStore } from "#imports";
+import { useStringHelpers } from "#imports";
 import HistoryChangeTable from "~/components/HistoryChangeTable.vue";
 
 const { copyText } = useCopyText();
 const { toLocaleDate, toLocaleDateLong, useDateInput, toInputDate, fromInputDate } = useDateConvert();
+const { firstCharUpper } = useStringHelpers();
 const { user } = useUserSession();
 const toastStore = useToastStore();
 
@@ -223,6 +225,7 @@ watch(
     if (!newRequest) return;
 
     if (initialRequestSnapshot === null) {
+      console.log("Initial snapshot set", newRequest);
       initialRequestSnapshot = JSON.parse(JSON.stringify(newRequest));
       hasUnsavedChanges.value = false;
       return;
@@ -316,7 +319,7 @@ const saveChanges = async (requestId: string) => {
   requestsStore.updatedRequest(request.value.requestId, request.value);
 
   isSaving.value = true;
-  isSaveRequest.value = true;
+  isSaveRequest.value = false;
   try {
     const response = await $fetch(`/api/requests/${requestId}`, {
       method: "PATCH" as any,
@@ -337,6 +340,12 @@ const saveChanges = async (requestId: string) => {
     });
 
     await refresh();
+
+    if (request.value) {
+      initialRequestSnapshot = JSON.parse(JSON.stringify(request.value));
+      hasUnsavedChanges.value = false;
+    }
+
     toastStore.showToast("Изменения сохранены", "success");
   } catch (error) {
     console.error("Error saving changes:", error);

@@ -158,7 +158,7 @@ const handleFocus = <T extends object>(item: T, field: keyof T) => {
 // Проверяем и инициализируем tableCalc с корректной структурой
 const defaultTableCalc: TableCalc = {
   base: {
-    basePrice: null,
+    basePrice: 0,
     quantity: 0,
     fullPrice: 0,
     commission: 0,
@@ -166,7 +166,7 @@ const defaultTableCalc: TableCalc = {
     profit: 0,
   },
   visa: {
-    basePrice: null,
+    basePrice: 0,
     quantity: 0,
     fullPrice: 0,
     commission: 0,
@@ -174,7 +174,7 @@ const defaultTableCalc: TableCalc = {
     profit: 0,
   },
   fuel: {
-    basePrice: null,
+    basePrice: 0,
     quantity: 0,
     fullPrice: 0,
     commission: 0,
@@ -182,7 +182,7 @@ const defaultTableCalc: TableCalc = {
     profit: 0,
   },
   insurance: {
-    basePrice: null,
+    basePrice: 0,
     quantity: 0,
     fullPrice: 0,
     commission: 0,
@@ -190,7 +190,7 @@ const defaultTableCalc: TableCalc = {
     profit: 0,
   },
   additional: {
-    basePrice: null,
+    basePrice: 0,
     quantity: 0,
     fullPrice: 0,
     commission: 0,
@@ -198,7 +198,7 @@ const defaultTableCalc: TableCalc = {
     profit: 0,
   },
   discount: {
-    amount: null,
+    amount: 0,
   },
   total: {
     fullPrice: 0,
