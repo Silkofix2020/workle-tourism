@@ -13,6 +13,7 @@
 
         <InfoPanel v-if="infoStore.paymentsInfo" :blockType="'payments'" :data="infoStore.paymentsInfo" />
       </div>
+      <!-- фильтры и сортировка -->
       <SectionWrapper>
         <div class="page-header">
           <h2>Заявки ({{ requestsStore.total }})</h2>
@@ -36,7 +37,7 @@
             </select>
           </div>
           <div class="sort-order">
-            <label>Порядок сортировки:</label>
+            <label>Сортировка по статусу:</label>
             <select v-model="selectedStatus">
               <option value="">Все</option>
 
@@ -44,9 +45,6 @@
                 {{ status.label }}
               </option>
             </select>
-          </div>
-          <div class="search">
-            <input type="text" v-model="searchQuery" placeholder="Поиск по заявкам" />
           </div>
           <div class="global__search">
             <RequestsSearch />
@@ -109,10 +107,10 @@ const statusOptions = [
 const sortedRequests = computed((): Request[] => {
   let filtered = [...requestsStore.requests];
 
-  if (requestsStore.searchById) {
+  if (requestsStore.searchParam) {
     filtered = filtered.filter(
       (request) =>
-        request.requestId === requestsStore.searchById || request.tourOperatorRequestId === requestsStore.searchById
+        request.requestId === requestsStore.searchParam || request.tourOperatorRequestId === requestsStore.searchParam
     );
   } else if (searchQuery.value) {
     // 🔍 Обычный поиск по строке
