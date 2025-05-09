@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const request = await Request.findOne(
-      { requestId: searchValue },
+      { $or: [{ requestId: searchValue }, { tourOperatorRequestId: searchValue }] },
       {
         departureDate: 1,
         requestId: 1,
